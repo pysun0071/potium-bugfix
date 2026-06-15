@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POTIUM — Bug Fix Archive</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0b0f0b;
+    --bg2:       #111811;
+    --bg3:       #192019;
+    --green:     #a8e063;
+    --green-dim: #56803a;
+    --text:      #e8f0e8;
+    --text-dim:  #7a9a7a;
+    --border:    #2a3a2a;
+    --red:       #e05050;
+    --yellow:    #e0c050;
+    --blue:      #50a0e0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* === 헤더 === */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 48px 0 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: 50%; transform: translateX(-50%);
+    width: 600px; height: 300px;
+    background: radial-gradient(ellipse, rgba(168,224,99,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .logo {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 700;
+    color: var(--green);
+    letter-spacing: 6px;
+    text-shadow: 0 0 40px rgba(168,224,99,0.3);
+  }
+
+  .logo-sub {
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+
+  .header-meta {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+
+  .meta-tag {
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 4px 12px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text-dim);
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* === 필터 바 === */
+  .filter-bar {
+    max-width: 900px;
+    margin: 32px auto 0;
+    padding: 0 24px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-btn:hover,
+  .filter-btn.active {
+    border-color: var(--green);
+    color: var(--green);
+    background: rgba(168,224,99,0.06);
+  }
+
+  /* === 메인 컨텐츠 === */
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  /* === 버그 카드 === */
+  .bug-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .bug-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+
+  .bug-card:hover { border-color: var(--green-dim); }
+
+  .bug-header {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .bug-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--green-dim);
+    font-weight: 700;
+  }
+
+  .bug-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .bug-badges {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 2px 7px;
+    border-radius: 2px;
+    font-weight: 700;
+  }
+
+  .badge-physics  { background: rgba(80,160,224,0.15); color: var(--blue); }
+  .badge-ui       { background: rgba(224,192,80,0.15); color: var(--yellow); }
+  .badge-script   { background: rgba(168,224,99,0.15); color: var(--green); }
+  .badge-render   { background: rgba(224,80,80,0.15);  color: var(--red); }
+  .badge-unity    { background: rgba(160,80,224,0.15); color: #c080ff; }
+
+  .chevron {
+    font-size: 12px;
+    color: var(--text-dim);
+    transition: transform 0.2s;
+    margin-left: 8px;
+  }
+  .bug-card.open .chevron { transform: rotate(180deg); }
+
+  /* === 카드 상세 내용 === */
+  .bug-body {
+    display: none;
+    border-top: 1px solid var(--border);
+    padding: 20px;
+    background: var(--bg3);
+  }
+
+  .bug-card.open .bug-body { display: block; }
+
+  .bug-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 640px) {
+    .bug-grid { grid-template-columns: 1fr; }
+  }
+
+  .bug-section-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .bug-section-body {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  .bug-section-body code {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    background: var(--bg);
+    padding: 1px 5px;
+    border-radius: 2px;
+    color: var(--green);
+  }
+
+  /* 원인 → 빨간, 해결 → 초록 */
+  .col-cause .bug-section-title  { color: var(--red); border-color: rgba(224,80,80,0.3); }
+  .col-fix   .bug-section-title  { color: var(--green); border-color: rgba(168,224,99,0.3); }
+
+  /* === 통계 바 === */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+
+  .stat-item {
+    background: var(--bg2);
+    padding: 16px 20px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--green);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  /* === 푸터 === */
+  footer {
+    text-align: center;
+    padding: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1.5px;
+    font-family: 'Space Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">POTIUM</div>
+  <div class="logo-sub">POTTED ARTIUM — BUG FIX ARCHIVE</div>
+  <div class="header-meta">
+    <span class="meta-tag">UNITY 2D</span>
+    <span class="meta-tag">C# / TILEMAP</span>
+    <span class="meta-tag">2024010328 박영선</span>
+    <span class="meta-tag">UX PROGRAMMING</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- 통계 -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-num">18</div>
+      <div class="stat-label">TOTAL BUGS</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">7</div>
+      <div class="stat-label">PHYSICS</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">5</div>
+      <div class="stat-label">UI / UX</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">4</div>
+      <div class="stat-label">SCRIPT</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">2</div>
+      <div class="stat-label">RENDER</div>
+    </div>
+  </div>
+
+  <!-- 필터 -->
+  <div class="filter-bar" style="margin: 0 0 24px; padding: 0;">
+    <button class="filter-btn active" onclick="filter('all')">ALL</button>
+    <button class="filter-btn" onclick="filter('physics')">PHYSICS</button>
+    <button class="filter-btn" onclick="filter('ui')">UI</button>
+    <button class="filter-btn" onclick="filter('script')">SCRIPT</button>
+    <button class="filter-btn" onclick="filter('render')">RENDER</button>
+    <button class="filter-btn" onclick="filter('unity')">UNITY</button>
+  </div>
+
+  <div class="section-label">BUG FIX LOG — 클릭해서 펼치기</div>
+  <div class="bug-list" id="bugList">
+
+    <!-- BUG 01 -->
+    <div class="bug-card" data-tags="physics">
+      <div class="bug-header" onclick="toggle(this)">
+        <span class="bug-num">#01</span>
+        <span class="bug-title">점프 후 발판 설치 시 더블 점프 발생</span>
+        <div class="bug-badges">
+          <span class="badge badge-physics">PHYSICS</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bug-body">
+        <div class="bug-grid">
+          <div>
+            <div class="bug-section-title">현상</div>
+            <div class="bug-section-body">점프 중 Z키로 발판을 설치하면 공중에서 추가 점프가 가능해지는 버그</div>
+          </div>
+          <div class="col-cause">
+            <div class="bug-section-title">원인</div>
+            <div class="bug-section-body">발판 타일 생성 시 <code>Collider2D</code>가 즉시 생성되면서 <code>OnCollisionEnter2D</code>가 발동, <code>isJumping = false</code>로 리셋되어 공중에서 재점프 가능해짐</div>
+          </div>
+          <div class="col-fix">
+            <div class="bug-section-title">해결</div>
+            <div class="bug-section-body">공중에서 발판 설치 시(<code>isJumping = true</code>)에만 <code>isJustPlaced = true</code> 플래그를 켜서 <code>OnCollisionEnter2D</code> 착지 판정을 0.3초간 차단</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUG 02 -->
+    <div class="bug-card" data-tags="physics">
+      <div class="bug-header" onclick="toggle(this)">
+        <span class="bug-num">#02</span>
+        <span class="bug-title">착지 시 애니메이션 간헐적 멈춤</span>
+        <div class="bug-badges">
+          <span class="badge badge-physics">PHYSICS</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bug-body">
+        <div class="bug-grid">
+          <div>
+            <div class="bug-section-title">현상</div>
+            <div class="bug-section-body">발판 위를 걷다가 타일 이음새에서 점프 애니메이션이 멈추는 현상</div>
+          </div>
+          <div class="col-cause">
+            <div class="bug-section-title">원인</div>
+            <div class="bug-section-body"><code>OnCollisionEnter2D</code>만 사용하여 착지 감지 시, 타일 경계에서 충돌이 순간 끊겼다 재연결될 때 <code>isJumping = true</code>가 유지됨</div>
+          </div>
+          <div class="col-fix">
+            <div class="bug-section-title">해결</div>
+            <div class="bug-section-body"><code>OnCollisionStay2D</code> 추가로 발판 위에 있는 동안 매 프레임 착지 상태 유지. 단, <code>velocity.y <= 0.1f</code>일 때만 착지로 인정하여 점프 직후 오판 방지</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUG 03 -->
+    <div class="bug-card" data-tags="physics">
+      <div class="bug-header" onclick="toggle(this)">
+        <span class="bug-num">#03</span>
+        <span class="bug-title">점프가 전혀 안 되는 현상</span>
+        <div class="bug-badges">
+          <span class="badge badge-physics">PHYSICS</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bug-body">
+        <div class="bug-grid">
+          <div>
+            <div class="bug-section-title">현상</div>
+            <div class="bug-section-body">스페이스바를 눌러도 플레이어가 점프하지 않음. 콘솔에 [Jump] Executed는 찍힘</div>
+          </div>
+          <div class="col-cause">
+            <div class="bug-section-title">원인</div>
+            <div class="bug-section-body">Inspector에서 <code>Jump Power</code> 값이 <code>0.5</code>로 설정되어 있어 힘이 너무 약해 눈에 보이지 않았음</div>
+          </div>
+          <div class="col-fix">
+            <div class="bug-section-title">해결</div>
+            <div class="bug-section-body">Inspector → PlayerStageMove → <code>Jump Power</code> 값을 <code>0.5</code>에서 <code>12</code>로 수정</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUG 04 -->
+    <div class="bug-card" data-tags="physics">
+      <div class="bug-header" onclick="toggle(this)">
+        <span class="bug-num">#04</span>
+        <span class="bug-title">PlayerStageMove 상속 구조에서 점프 불가</span>
+        <div class="bug-badges">
+          <span class="badge badge-physics">PHYSICS</span>
+          <span class="badge badge-script">SCRIPT</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bug-body">
+        <div class="bug-grid">
+          <div>
+            <div class="bug-section-title">현상</div>
+            <div class="bug-section-body">PlayerMove를 상속한 PlayerStageMove 구조에서 점프가 동작하지 않음</div>
+          </div>
+          <div class="col-cause">
+            <div class="bug-section-title">원인</div>
+            <div class="bug-section-body">Unity에서 <code>OnCollisionEnter2D</code> 등 이벤트 함수는 상속 시 자식 클래스가 있으면 부모 것이 자동 호출되지 않아 착지 감지가 전혀 안 됨</div>
+          </div>
+          <div class="col-fix">
+            <div class="bug-section-title">해결</div>
+            <div class="bug-section-body">상속 구조를 폐기하고 <code>PlayerMove</code> 코드를 <code>PlayerStageMove</code>에 직접 복붙 후 발판 설치 코드만 추가하는 방식으로 변경</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUG 05 -->
+    <div class="bug-card" data-tags="physics">
+      <div class="bug-header" onclick="toggle(this)">
+        <span class="bug-num">#05</span>
+        <span class="bug-title">발판 위에서 점프 시 너무 높이 뜀</span>
+        <div class="bug-badges">
+          <span class="badge badge-physics">PHYSICS</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bug-body">
+        <div class="bug-grid">
+          <div>
+            <div class="bug-section-title">현상</div>
+            <div class="bug-section-body">점프 후 공중에서 <code>OnCollisionStay2D</code>가 즉시 <code>isJumping = false</code>로 리셋, 연속 점프가 되어 매우 높이 뜸</div>
+          </div>
+          <div class="col-cause">
+            <div class="bug-section-title">원인</div>
+            <div class="bug-section-body">점프 직후 플레이어가 아직 발판 위에 있는 상태에서 <code>OnCollisionStay2D</code>가 즉각 착지 판정을 내려버림</div>
+          </div>
+          <div class="col-fix">
+            <div class="bug-section-title">해결</div>
+            <div class="bug-section-body">점프 입력 시 <code>isJustJumped = true</code> 플래그를 0.2초간 켜서 해당 시간 동안 착지 판정 차단</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUG 06 -->
+    <div class="bug-card" data-tags="physics">
+      <div class="bug-header" onclick="toggle(this)">
+        <span class="bug-num">#06</span>
+        <span class="bug-title">좌우 이동이 안 되는 현상</span>
+        <div class="bug-badges">
+          <span class="badge badge-physics">PHYSICS</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bug-body">
+        <div class="bug-grid">
+          <div>
+            <div class="bug-section-title">현상</div>
+            <div class="bug-section-body">PlayerStageMove 교체 후 좌우 이동이 전혀 동작하지 않음</div>
+          </div>
+          <div class="col-cause">
+            <div class="bug-section-title">원인</div>
+            <div class="bug-section-body">스크립트 교체 시 Inspector 값이 초기화되어 <code>Max Speed = 0</code>이 됨</div>
+          </div>
+          <div class="col-fix">
+            <div class="bug-section-title">해결</div>
+            <div class="bug-section-body">Inspector → PlayerStageMove → <code>Max Speed</code>를 <code>3.4</code>로, <code>Jump Power</code>를 <code>12</code>로 재설정</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUG 07 -->
+    <div class="bug-card" data-tags="physics">
+      <div class="bug-header" onclick="toggle(this)">
+        <span class="bug-num">#07</span>
+        <span class="bug-title">발판 설치 시 애니메이션 멈춤</span>
+        <div class="bug-badges">
+          <span class="badge badge-physics">PHYSICS</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bug-body">
+        <div class="bug-grid">
+          <div>
+            <div class="bug-section-title">현상</div>
+            <div class="bug-section-body">Z키로 발판 설치 후 캐릭터 애니메이션이 점프 포즈에서 멈춤</div>
+          </div>
+          <div class="col-cause">
+            <div class="bug-section-title">원인</div>
+            <div class="bug-section-body"><code>isJustPlaced</code> 타이머가 바닥에서 설치 시에도 착지 판정을 차단하여 <code>isJumping</code>이 해제되지 않음</div>
+          </div>
+          <div class="col-fix">
+            <div class="bug-section-title">해결</div>
+            <div class="bug-section-body">공중(<code>isJumping = true</code>)에서 설치할 때만 <code>isJustPlaced</code> 플래그를 켜도록 조건 추가</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUG 08 -->
+    <div class="bug-card" data-tags="ui">
+      <div class="bug-header" onclick="toggle(this)">
+        <span class="bug-num">#08</span>
+        <span class="bug-title">고스트 스프라이트 위치와 실제 설치 위치 불일치</span>
+        <div class="bug-badges">
+          <span class="badge badge-ui">UI</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bug-body">
+        <div class="bug-grid">
+          <div>
+            <div class="bug-section-title">현상</div>
+            <div class="bug-section-body">미리보기 고스트가 보이는 위치와 실제 Z키 설치 위치가 다름</div>
+          </div>
+          <div class="col-cause">
+            <div class="bug-section-title">원인</div>
+            <div class="bug-section-body">고스트는 X좌표를 플레이어 실제 위치로, 설치는 <code>GetCellCenterWorld()</code>의 셀 중앙 X로 계산하여 좌표 불일치 발생</div>
+          </div>
+          <div class="col-fix">
+            <div class="bug-section-title">해결</div>
+            <div class="bug-section-body">고스트 위치를 설치 위치와 동일하게 <code>GetCellCenterWorld()</code>로 통일 + <code>Vector3.Lerp</code>로 부드럽게 이동. 처음 나타날 때는 즉시 위치로 점프</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUG 09 -->
+    <div class="bug-card" data-tags="ui">
+      <div class="bug-header" onclick="toggle(this)">
+        <span class="bug-num">#09</span>
+        <span class="bug-title">고스트 스프라이트 뚝뚝 끊김</span>
+        <div class="bug-badges">
+          <span class="badge badge-ui">UI</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bug-body">
+        <div class="bug-grid">
+          <div>
+            <div class="bug-section-title">현상</div>
+            <div class="bug-section-body">플레이어 이동 시 고스트가 셀 단위로 뚝뚝 끊겨서 이동함</div>
+          </div>
+          <div class="col-cause">
+            <div class="bug-section-title">원인</div>
+            <div class="bug-section-body">고스트 위치를 <code>GetCellCenterWorld()</code>로 매 프레임 직접 지정하여 타일 그리드 단위로 점프하듯 이동</div>
+          </div>
+          <div class="col-fix">
+            <div class="bug-section-title">해결</div>
+            <div class="bug-section-body"><code>Vector3.Lerp(현재위치, 목표위치, Time.deltaTime * 25f)</code>로 보간하여 부드럽게 이동</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUG 10 -->
+    <div class="bug-card" data-tags="ui">
+      <div class="bug-header" onclick="toggle(this)">
+        <span class="bug-num">#10</span>
+        <span class="bug-title">포탈 상호작용 1회 만에 클리어 패널 미표시</span>
+        <div class="bug-badges">
+          <span class="badge badge-ui">UI</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bug-body">
+        <div class="bug-grid">
+          <div>
+            <div class="bug-section-title">현상</div>
+            <div class="bug-section-body">포탈 앞에서 스페이스바를 눌러도 2번 눌러야 클리어 패널이 뜸</div>
+          </div>
+          <div class="col-cause">
+            <div class="bug-section-title">원인</div>
+            <div class="bug-section-body">스페이스바가 점프 키와 동일하여, 점프 발동 → <code>OnTriggerExit2D</code> → <code>triggered = false</code> 리셋 → 2번째 입력에 반응</div>
+          </div>
+          <div class="col-fix">
+            <div class="bug-section-title">해결</div>
+            <div class="bug-section-body">포탈 상호작용 키를 <code>Space</code>에서 <code>E</code>키로 변경하여 점프와 충돌 방지</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUG 11 -->
+    <div class="bug-card" data-tags="ui">
+      <div class="bug-header" onclick="toggle(this)">
+        <span class="bug-num">#11</span>
+        <span class="bug-title">NPC 대화창 닫기 버튼 클릭 시 게임 강제 종료</span>
+        <div class="bug-badges">
+          <span class="badge badge-ui">UI</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bug-body">
+        <div class="bug-grid">
+          <div>
+            <div class="bug-section-title">현상</div>
+            <div class="bug-section-body">NPC 대화창의 닫기 버튼을 누르면 2초 후 게임이 종료됨</div>
+          </div>
+          <div class="col-cause">
+            <div class="bug-section-title">원인</div>
+            <div class="bug-section-body"><code>QuitButton</code> 오브젝트와 NPC 닫기 버튼이 Canvas상에서 같은 위치에 겹쳐있어 <code>Raycast Target</code>이 QuitButton까지 클릭을 전달</div>
+          </div>
+          <div class="col-fix">
+            <div class="bug-section-title">해결</div>
+            <div class="bug-section-body"><code>QuitButton</code> → Image 컴포넌트 → <code>Raycast Target 체크 해제</code>로 클릭 가로막기 방지. 버튼 위치를 게임 나가기 스프라이트 위치에 정확히 정렬</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUG 12 -->
+    <div class="bug-card" data-tags="ui">
+      <div class="bug-header" onclick="toggle(this)">
+        <span class="bug-num">#12</span>
+        <span class="bug-title">NPC 대화창 닫기 시 스케일 확대 후 사라짐</span>
+        <div class="bug-badges">
+          <span class="badge badge-ui">UI</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bug-body">
+        <div class="bug-grid">
+          <div>
+            <div class="bug-section-title">현상</div>
+            <div class="bug-section-body">NPC 대화창 닫기 버튼 클릭 시 패널이 갑자기 크게 확대됐다가 천천히 사라짐</div>
+          </div>
+          <div class="col-cause">
+            <div class="bug-section-title">원인</div>
+            <div class="bug-section-body">닫기 버튼의 Button 컴포넌트 <code>Transition</code>이 <code>Sprite Swap</code>으로 설정되어 클릭 시 스프라이트가 교체되며 크기 변화 발생</div>
+          </div>
+          <div class="col-fix">
+            <div class="bug-section-title">해결</div>
+            <div class="bug-section-body">Button 컴포넌트 → <code>Transition → None</code>으로 변경</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUG 13 -->
+    <div class="bug-card" data-tags="render">
+      <div class="bug-header" onclick="toggle(this)">
+        <span class="bug-num">#13</span>
+        <span class="bug-title">발판이 배경 뒤로 숨는 현상</span>
+        <div class="bug-badges">
+          <span class="badge badge-render">RENDER</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bug-body">
+        <div class="bug-grid">
+          <div>
+            <div class="bug-section-title">현상</div>
+            <div class="bug-section-body">게임 뷰에서 발판이 배경 이미지 뒤에 그려져 보이지 않음</div>
+          </div>
+          <div class="col-cause">
+            <div class="bug-section-title">원인</div>
+            <div class="bug-section-body">Tilemap의 <code>Order in Layer</code>가 배경 스프라이트보다 낮게 설정되어 있음</div>
+          </div>
+          <div class="col-fix">
+            <div class="bug-section-title">해결</div>
+            <div class="bug-section-body">Hierarchy → Grid → Tilemap → Tilemap Renderer → <code>Order in Layer</code>를 <code>10</code>으로 설정. 배경은 0~3, 발판은 10, 플레이어는 11로 레이어 순서 정리</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUG 14 -->
+    <div class="bug-card" data-tags="render">
+      <div class="bug-header" onclick="toggle(this)">
+        <span class="bug-num">#14</span>
+        <span class="bug-title">빌드에서 설치 발판이 안 보이는 현상</span>
+        <div class="bug-badges">
+          <span class="badge badge-render">RENDER</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bug-body">
+        <div class="bug-grid">
+          <div>
+            <div class="bug-section-title">현상</div>
+            <div class="bug-section-body">에디터에서는 보이는데 빌드 파일에서 Z키로 설치한 발판이 4개 이하일 때 렌더링 안 됨</div>
+          </div>
+          <div class="col-cause">
+            <div class="bug-section-title">원인</div>
+            <div class="bug-section-body">URP 환경에서 <code>Sprites-Default</code> 머티리얼이 빌드에 포함되지 않아 타일 렌더링 실패</div>
+          </div>
+          <div class="col-fix">
+            <div class="bug-section-title">해결</div>
+            <div class="bug-section-body">새 Material 생성 → Shader를 <code>Universal Render Pipeline/2D/Sprite-Lit-Default</code>로 설정 → Tilemap Renderer Material 슬롯에 적용 후 재빌드</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUG 15 -->
+    <div class="bug-card" data-tags="unity">
+      <div class="bug-header" onclick="toggle(this)">
+        <span class="bug-num">#15</span>
+        <span class="bug-title">D3D11 GPU Timeout으로 Unity 에디터 강제 종료</span>
+        <div class="bug-badges">
+          <span class="badge badge-unity">UNITY</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bug-body">
+        <div class="bug-grid">
+          <div>
+            <div class="bug-section-title">현상</div>
+            <div class="bug-section-body">"Failed to present D3D11 swapchain due to device reset/removed" 에러로 Unity 에디터 강제 종료</div>
+          </div>
+          <div class="col-cause">
+            <div class="bug-section-title">원인</div>
+            <div class="bug-section-body">GPU 과부하로 Windows TDR(Timeout Detection and Recovery)이 발동하여 드라이버 강제 리셋</div>
+          </div>
+          <div class="col-fix">
+            <div class="bug-section-title">해결</div>
+            <div class="bug-section-body">Edit → Project Settings → Player → Other Settings → <code>Auto Graphics API for Windows</code> 체크 해제 → Direct3D11 제거 → OpenGLCore 추가 후 Unity 재시작</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUG 16 -->
+    <div class="bug-card" data-tags="unity">
+      <div class="bug-header" onclick="toggle(this)">
+        <span class="bug-num">#16</span>
+        <span class="bug-title">다른 해상도 환경에서 UI 위치 틀어짐</span>
+        <div class="bug-badges">
+          <span class="badge badge-unity">UNITY</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bug-body">
+        <div class="bug-grid">
+          <div>
+            <div class="bug-section-title">현상</div>
+            <div class="bug-section-body">다른 해상도 모니터에서 게임 실행 시 Canvas UI 요소가 작아지거나 위치가 틀어짐</div>
+          </div>
+          <div class="col-cause">
+            <div class="bug-section-title">원인</div>
+            <div class="bug-section-body">Canvas Scaler의 UI Scale Mode가 <code>Constant Pixel Size</code>로 설정되어 해상도 변화에 대응하지 못함</div>
+          </div>
+          <div class="col-fix">
+            <div class="bug-section-title">해결</div>
+            <div class="bug-section-body">Canvas Scaler → <code>UI Scale Mode: Scale With Screen Size</code> → Reference Resolution <code>1920x1080</code> → Screen Match Mode <code>Match Width Or Height 0.5</code></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUG 17 -->
+    <div class="bug-card" data-tags="script">
+      <div class="bug-header" onclick="toggle(this)">
+        <span class="bug-num">#17</span>
+        <span class="bug-title">씬 전환 시 페이드 없이 즉시 전환</span>
+        <div class="bug-badges">
+          <span class="badge badge-script">SCRIPT</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bug-body">
+        <div class="bug-grid">
+          <div>
+            <div class="bug-section-title">현상</div>
+            <div class="bug-section-body">SceneFader를 적용했음에도 씬 전환 시 페이드 효과 없이 즉시 전환됨</div>
+          </div>
+          <div class="col-cause">
+            <div class="bug-section-title">원인</div>
+            <div class="bug-section-body"><code>SceneFader.Instance</code>가 null인 상태. Intro 씬에만 SceneFader 오브젝트가 있어야 하는데 없거나 비활성화된 상태</div>
+          </div>
+          <div class="col-fix">
+            <div class="bug-section-title">해결</div>
+            <div class="bug-section-body">Intro 씬 Hierarchy에 빈 오브젝트 생성 → <code>SceneFader</code> 컴포넌트 부착. <code>DontDestroyOnLoad</code>로 모든 씬에서 유지됨</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUG 18 -->
+    <div class="bug-card" data-tags="script">
+      <div class="bug-header" onclick="toggle(this)">
+        <span class="bug-num">#18</span>
+        <span class="bug-title">가이드 닫기 버튼 클릭 무반응</span>
+        <div class="bug-badges">
+          <span class="badge badge-script">SCRIPT</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bug-body">
+        <div class="bug-grid">
+          <div>
+            <div class="bug-section-title">현상</div>
+            <div class="bug-section-body">스테이지 가이드 패널의 닫기(X) 버튼을 눌러도 반응이 없음</div>
+          </div>
+          <div class="col-cause">
+            <div class="bug-section-title">원인</div>
+            <div class="bug-section-body"><code>IPointerClickHandler</code> 방식 사용 시 Canvas의 EventSystem과 충돌하거나 인식 안 됨</div>
+          </div>
+          <div class="col-fix">
+            <div class="bug-section-title">해결</div>
+            <div class="bug-section-body"><code>IPointerClickHandler</code> 제거 후 일반 <code>public void</code> 메서드 방식으로 변경. Button 컴포넌트의 On Click()에 직접 연결</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  POTIUM — POTTED ARTIUM &nbsp;·&nbsp; BUG FIX ARCHIVE &nbsp;·&nbsp; 2024010328 박영선
+</footer>
+
+<script>
+  function toggle(header) {
+    const card = header.parentElement;
+    card.classList.toggle('open');
+  }
+
+  function filter(tag) {
+    // 버튼 상태
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+
+    // 카드 필터
+    document.querySelectorAll('.bug-card').forEach(card => {
+      if (tag === 'all' || card.dataset.tags.includes(tag)) {
+        card.style.display = '';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  // 처음 로드 시 첫 번째 카드 열기
+  document.querySelector('.bug-card').classList.add('open');
+</script>
+</body>
+</html>
